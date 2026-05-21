@@ -1,0 +1,75 @@
+Prompt 1 — Convert raw notes to FR/NFR:
+
+"I'm building a Laravel-based GPA Tracker for university students. Here are my raw feature notes: [paste notes]. Convert these into a formal Software Requirements Specification with two clearly separated sections: Functional Requirements (numbered FR-1, FR-2…) and Non-Functional Requirements (NFR-1…). Each requirement must have an ID, a one-line description, and explicit acceptance criteria. Also flag any missing edge cases I haven't considered, especially around weighted grading, attendance, and GPA calculation."
+
+Prompt 2 — Edge case discovery:
+
+"Review these GPA Tracker requirements and list every edge case I'm likely missing. Focus on: (1) weightage validation (total > 100%, negative, zero), (2) marks_obtained greater than total_marks, (3) empty semesters with no courses, (4) courses with no graded assessments, (5) duplicate attendance entries for the same date, (6) academic standing thresholds, (7) email verification token expiry/tampering. Output as a numbered checklist."
+
+🔹 Phase 2 — System Design
+Prompt 3 — UML diagrams from code:
+
+"Here is my Laravel project structure with controllers and models: [paste code]. Generate the following UML diagrams in PlantUML syntax: (1) Use-Case Diagram with Student and Admin actors, (2) Class Diagram with all attributes, methods, and multiplicities, (3) Sequence Diagram for the 'Add Grade' flow, (4) Activity Diagram for 'Generate Transcript PDF', (5) Overall MVC Architecture Diagram. Use proper PlantUML notation."
+
+Prompt 4 — Normalized schema design:
+
+"Design a normalized MySQL schema for a GPA Tracker with these entities: User, Semester, Course, Grade, Attendance, Task. Every resource table must have a user_id foreign key for ownership enforcement. Apply cascade-delete from Semester → Courses → Grades/Attendances. Output as Laravel migration files with Schema::create calls, proper indexes, and foreign key constraints."
+
+Prompt 5 — Ownership-check pattern:
+
+"Write a reusable Laravel pattern that ensures every controller action verifies the authenticated user owns the requested resource before reading or mutating it. Show implementation for SemesterController, CourseController, GradeController. Return HTTP 403 on ownership violation. Use route model binding where possible."
+
+🔹 Phase 3 — Implementation
+Prompt 6 — Semester model boot hook:
+
+"Write a Laravel Eloquent boot hook on the Semester model that auto-derives the academic year field from start_date whenever a semester is created or updated. The year should be the calendar year of start_date."
+
+Prompt 7 — calculateCurrentGrade helper:
+
+"Implement a method calculateCurrentGrade() on the Course model. Formula: weighted average across all graded assessments = Sum((marks_obtained / total_marks) * weightage) / Sum(weightage). Handle these edge cases: no grades exist (return null), sum of weightage is 0, total_marks is 0. Persist the result to courses.current_grade."
+
+Prompt 8 — Letter grade & grade point mapping:
+
+"Write two Course model methods: (1) getLetterGrade(float $percentage): string mapping percentage to A+, A, A-, B+, B, B-, C+, C, C-, D+, D, F using standard university thresholds. (2) getGradePoint(string $letter): float converting letter grades to the 4.0 scale. Provide the complete mapping table."
+
+Prompt 9 — Cumulative GPA:
+
+"Write a helper that calculates cumulative GPA across all of a user's semesters. Formula: Sum(grade_point * credits) / Sum(credits). Only include courses that have valid grades — exclude courses with no graded assessments. Use a schema-tolerant credit column lookup: try 'credits' first, then 'credit_hours', then 'credit' to handle legacy data."
+
+Prompt 10 — Attendance percentage:
+
+"Implement calculateAttendancePercentage() on the Course model. Count present + late as attended, exclude excused from denominator. Handle null/zero (no records) gracefully — return null, not 0. Also write a duplicate-date guard for AttendanceController@store that returns a validation error if the same course already has an attendance record for that date."
+
+Prompt 11 — Login rate limiting:
+
+"Configure Laravel's rate limiter for the login route: maximum 5 failed attempts per minute per IP address. On the 6th attempt, return HTTP 429 with a clear message and Retry-After header. Show me the RouteServiceProvider and AuthController changes needed."
+
+Prompt 12 — Email verification with custom token:
+
+"Implement custom token-based email verification (not Laravel's default signed URLs). Generate a 64-char random token on registration, store hashed in users.verification_token, expire after 24 hours. Send via Laravel Mail with a verification link. On click, validate token, mark email_verified_at, and clear the token. Handle expired and tampered tokens with appropriate error pages."
+
+Prompt 13 — DomPDF transcript:
+
+"Generate a printable academic transcript PDF using barryvdh/laravel-dompdf. The transcript should show: student name, all semesters with courses, credits, letter grades, GPA per semester, and cumulative GPA at the bottom. Wrap the GPA calculation in a database transaction to ensure consistency under concurrent requests. Style with inline CSS for PDF compatibility."
+
+Prompt 14 — Academic standing classifier:
+
+"Write a ReportController helper that classifies academic standing based on cumulative GPA: ≥3.5 = 'Dean's List', ≥3.0 = 'Good Standing', ≥2.0 = 'Satisfactory', <2.0 = 'Academic Probation'. Display on the progress report and transcript."
+
+🔹 Phase 4 — Testing
+Prompt 15 — Test case matrix:
+
+"Generate a complete test case matrix for the GPA Tracker as a markdown table with columns: ID, Module, Scenario, Steps, Expected Result, Priority. Cover all CRUD flows, boundary cases (weightage 0/100/>100, marks > total), security cases (accessing another user's resource → 403), email verification (valid/expired/tampered tokens), PDF generation (0/1/many semesters), and login rate limiting."
+
+Prompt 16 — PHPUnit skeleton tests:
+
+"Write PHPUnit feature test skeletons for: SemesterControllerTest, CourseControllerTest, GradeControllerTest, AuthControllerTest. Each test class should cover authenticated access, ownership enforcement (403 for foreign user's resources), validation failures, and happy-path CRUD. Use RefreshDatabase trait and factories."
+
+🔹 Phase 5 — Documentation
+Prompt 17 — Full technical document:
+
+"Using my Laravel codebase as the source of truth, generate a complete SDLC documentation in markdown covering: (1) Introduction & Project Overview, (2) Full SDLC with Human vs AI contribution table, (3) Requirements Analysis with FR/NFR, (4) System Design with module boundaries, (5) Implementation details per controller, (6) Testing strategy and matrix, (7) Technology Stack table. Tone: professional academic report."
+
+Prompt 18 — AI-vs-Human attribution table:
+
+"For each SDLC phase (Requirements, Design, Implementation, Testing, Documentation), produce a 4-column table: Phase # | Phase Name | Developer Contribution | AI (Claude) Contribution. Be specific — name exact functions, files, and decisions in each cell."
